@@ -25,24 +25,53 @@ docker run --rm -ti -v /var/run/docker.sock:/var/run/docker.sock -e GS_PROJECT_I
 ```
 
 
-## Automatize backups
+## Backup all the containers marked for it
 
-Either use cron to manually perform backups, or run the dory server with google database.
+The web interface allows you to tell which containers should be backuped. (what about labels ?)
 
 # What it does
 
-To backup a container, dory inspects its volumes, mounts them into a fake container in `/backup/...` and runs duplicity to your host of choice.
+To backup a container, dory inspects its volumes, stops all the containers that are linked to it, mounts them into a fake container in `/backup/...` and runs duplicity to your host of choice. Afterwards, it starts the containers it had stopped before.
+
+(it should be possible to change this behaviour on a per-container basis)
 
 # The Web server
 
 You can
 
-* Browse all 
+* Browse all the backups and see their status ;
+    - Current backup size
+    - Oldest backup entry date
+    - Latest backup entry date
+    - Backup start date (first time ever it was backuped)
+    - Container name, container id
+    - Server name (on which host the container was)
+    - Whether the container is orphaned or not (as in ; the container that was being backuped disappeared from the machine)
+    - Description of the container
+    - List of all the possible restore points, along with descriptions for those that had one
+* Restore a backup into another container (of a specific time) (maybe with a pub/sub thing? maybe we just want *one* web server and several slaves that just listen to google's pub/sub protocol)
+* Delete a useless backup
+* Rename a backup or change its server (useful if one knows what he is doing like migrating a container from a host to another)
+* Name a backup point (for instance "backup before production reload 2016-02-10")
+* Add some metadatas to a backup (description, ...)
+* Browse the containers running on a machine to optionally mark one for backup
+* Configure some custom duplicity options (like how much data to retain)
+* See some data such as current total size (and maybe pricing ?)
+* Launch an unscheduled backup
+* Schedule backups
+* See the pings of all the running dory servers (they coordinate through google ?)
+* Configure emailing to send reports to (only one server should be in charge of that...), which tells you
+    - Which containers were backuped an when exactly
+    - Which containers are new
+    - Which were removed
+    - Which were orphaned
+
+You can have as many servers running as you like ; you pay for google's database anyway.
+
+# What does it not do ?
+
+Dory does not backup a container running profile. You need to manage those yourself for instance with some `docker-compose.yml` files that you put on a git somewhere. It only cares about data containers, which generally don't change and just have 
 
 # Best practices
 
 Have a data container (just like docker's doc say !) since the identifier of the backup takes the container hash in it -- it will change everytime you recreate it otherwise.
-
-# I restored a backup, but I want to keep backuping in it, because I know it will be alone
-
-Well, tough luck Johny, you'll have to back it up all over again.
