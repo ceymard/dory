@@ -4,9 +4,17 @@ Dory is a backup solution for docker. It is (for now) mainly oriented towards ba
 
 Aside from just backing up your data containers, dory can also schedule backuping and show you which containers were backed up and when.
 
+# On what does it rely
+
+Only google's storage is used when using manual backup.
+
+# How much does it cost
+
+There is no telling exactly how much dory costs as your infrastructure's size can vary, but it *will* cost you money since it is all based on google's services.
+
 # How to use it
 
-## Setting up access to google cloud storage
+## Setting up access to google cloud storage and other services
 
 The dory container uses three environment variables
 
@@ -47,7 +55,7 @@ You can
     - Container name, container id
     - Server name (on which host the container was)
     - Whether the container is orphaned or not (as in ; the container that was being backuped disappeared from the machine)
-    - Description of the container
+    - Description of the container (or the container name if unavailable)
     - List of all the possible restore points, along with descriptions for those that had one
 * Restore a backup into another container (of a specific time) (maybe with a pub/sub thing? maybe we just want *one* web server and several slaves that just listen to google's pub/sub protocol)
 * Delete a useless backup
@@ -65,13 +73,29 @@ You can
     - Which containers are new
     - Which were removed
     - Which were orphaned
+* Group backups logically -- an app may have data beyond only its database
 
 You can have as many servers running as you like ; you pay for google's database anyway.
 
 # What does it not do ?
 
-Dory does not backup a container running profile. You need to manage those yourself for instance with some `docker-compose.yml` files that you put on a git somewhere. It only cares about data containers, which generally don't change and just have 
+Dory does not backup a container running profile. You need to manage those yourself for instance with some `docker-compose.yml` files that you put on a git somewhere. It only cares about data containers, which generally don't change and just have.
+
+Or you can always create a data container mounted on your docker-compose directory and tell dory to backup it.
 
 # Best practices
 
 Have a data container (just like docker's doc say !) since the identifier of the backup takes the container hash in it -- it will change everytime you recreate it otherwise.
+
+
+# Stories
+
+## What happens if a slave loses its connection with the master. Will informations be lost ? (should the informations be local to a node ? should it be replicated ? should an alert be generated if the master does not see a slave anymore ? should backups be still done even in the event of losing a connection ?)
+
+## I want to know if a container does not exist anymore
+
+## I want to flag a container to be backuped
+
+## I want to delete a backup
+
+## My container changed, and I want to keep it backuping elsewhere
